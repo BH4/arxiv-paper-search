@@ -111,8 +111,8 @@ def get_papers():
             abstract = entry.summary.replace('\n', ' ')
             abstract = abstract.replace('<p>', ' ')
             abstract = abstract.replace('</p>', ' ')
-            authors = entry.authors[0]['name'].split(', ')
-            authors = [cleanhtml(x) for x in authors]
+            authors = entry.authors[0]['name'].split('\n')
+            authors = [cleanhtml(x).strip() for x in authors]
             link = entry.link
 
             # Fuzzy search of combined title and abstract
