@@ -35,7 +35,7 @@ def author_match(first_last, author):
     if first_last == author:
         return True, 'Full match'
 
-    if '.' == author[1] and author[0] == first_last[0]:
+    if author[0] == first_last[0] and '.' == author[1]:
         last = first_last.split()[1]
         return last in author, 'Abbreviated match'
 
@@ -111,7 +111,7 @@ def get_papers():
             abstract = entry.summary.replace('\n', ' ')
             abstract = abstract.replace('<p>', ' ')
             abstract = abstract.replace('</p>', ' ')
-            authors = entry.authors[0]['name'].split('\n')
+            authors = entry.authors[0]['name'].split(', ')
             authors = [cleanhtml(x).strip() for x in authors]
             link = entry.link
 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     papers = get_papers()
     if len(papers) > 0:
         logging.info('Sending papers.')
-        send_papers(papers)  # only saves if not emailing
+        send_papers(papers)
     elif settings.send_email:
         # refresh token
         email_sender.get_credentials()
