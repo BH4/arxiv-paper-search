@@ -109,7 +109,13 @@ def get_papers():
         # Iterate over each entry in the feed
         for entry in feed.entries:
             title = entry.title
-            abstract = entry.summary.replace('\n', ' ')
+            summary = entry.summary.split('\n')
+            number_and_announce_type = summary[0]
+            abstract = ' '.join(summary[1:])
+
+            if 'Abstract: ' == abstract[:10]:
+                abstract = abstract[10:]
+
             abstract = abstract.replace('<p>', ' ')
             abstract = abstract.replace('</p>', ' ')
             authors = entry.authors[0]['name'].split(', ')
