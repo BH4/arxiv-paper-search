@@ -5,7 +5,7 @@
 ###############################################################################
 send_email = False
 to_email = 'your_email@provider.com'
-from_email = 'your_sendding_email@provider.com'
+from_email = 'your_sending_email@provider.com'
 
 ###############################################################################
 # Content settings
@@ -35,10 +35,11 @@ def paper_meets_requirements(found_key_groups, found_authors):
                       watched_keywords list.
     found_authors: Author full names which are seen in the author list.
 
-    Function supplying the logic for which papers are of interest. 
+    Function supplying the logic for which papers are of interest.
     This function is run on each paper and the inputs are information found
-    about a particular paper. Returns a boolian which if True will prompt the
-    code to keep this paper.
+    about a particular paper. Returns a number which if >0 will prompt the
+    code to keep this paper. Papers will be sorted such that larger numbers
+    are shown first.
 
     Replace this code with whatever will make a paper interesting to you.
     """
@@ -47,4 +48,4 @@ def paper_meets_requirements(found_key_groups, found_authors):
     # Example: If any authors I'm interested in publish I also want to see it.
     interesting_authors = len(found_authors) > 0
 
-    return interesting_keywords or interesting_authors
+    return int(interesting_keywords or interesting_authors)

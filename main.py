@@ -101,6 +101,7 @@ def keyword_fuzzy_match(text):
 
 def get_papers():
     found_papers = []
+    paper_importance = []
 
     for sub in settings.subjects:
         feed = todays_feed(sub)
@@ -120,16 +121,19 @@ def get_papers():
 
             # Author check
             author_matches, author_match_reasons = author_check(authors)
-            if settings.paper_meets_requirements(existing_key_groups, author_matches):
+            importance = settings.paper_importance(existing_key_groups, author_matches)
+            if importance > 0:
                 if settings.summarize_abstract:
                     abstract = summarize(abstract)
                 found_papers.append((title, abstract, authors, link, key_matches, author_match_reasons))
+                paper_importance.append(importance)
 
     logging.info(f'Found {len(found_papers)} interesting papers.')
 
-    # calculate paper importance and sort
-    # ....
+    # Sort papers on importance
+    found_papers = [x for _, x in sorted(zip(paper_importance, found_papers), reverse=True)]
 
+    logging.info(f'Paper importance values: {sorted(paper_importance, reverse=True)}')
     return found_papers
 
 
