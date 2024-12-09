@@ -33,7 +33,7 @@ watched_authors = ['Not Real', 'Aperson Name', 'First Last']
 subjects = ['nucl-th', 'quant-ph', 'hep-ph', 'astro-ph.HE']
 
 
-def paper_meets_requirements(found_key_groups, found_authors):
+def paper_importance(found_key_groups, found_authors):
     """
     found_key_groups: List of "group identifiers" specified by the
                       watched_keywords list.
