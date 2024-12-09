@@ -2,6 +2,7 @@ import os
 import feedparser
 import regex
 from datetime import datetime
+import json
 import logging
 
 from summarizer import summarize
@@ -101,13 +102,15 @@ def keyword_fuzzy_match(text):
 
 def get_papers():
     found_papers = []
-    paper_importance = []
 
+    total_feed_papers = 0
     for sub in settings.subjects:
         feed = todays_feed(sub)
 
         # Iterate over each entry in the feed
         for entry in feed.entries:
+            total_feed_papers += 1
+
             title = entry.title
             summary = entry.summary.split('\n')
             number_and_announce_type = summary[0]
@@ -131,24 +134,101 @@ def get_papers():
             if importance > 0:
                 if settings.summarize_abstract:
                     abstract = summarize(abstract)
-                found_papers.append((title, abstract, authors, link, key_matches, author_match_reasons))
-                paper_importance.append(importance)
+                found_papers.append((importance, title, abstract, authors, link, key_matches, author_match_reasons))
 
-    logging.info(f'Found {len(found_papers)} interesting papers.')
-
-    # Sort papers on importance
-    found_papers = [x for _, x in sorted(zip(paper_importance, found_papers), reverse=True)]
-
-    logging.info(f'Paper importance values: {sorted(paper_importance, reverse=True)}')
+    found_papers = sorted(found_papers, reverse=True, key=lambda t: t[0])
+    logging.info(f'Found {len(found_papers)} interesting papers today out of {total_feed_papers}.')
+    logging.info(f'Paper importance values: {[x[0] for x in found_papers]}')
     return found_papers
+
+
+def load_saved_papers(verbose=True):
+    """
+    Load papers from saved json file. Note that converting to json and loading
+    back to python has converted the tuples to lists. This converts them back.
+    """
+    if not os.path.exists('saved_papers.json'):
+        return []
+
+    with open('saved_papers.json', 'r') as f:
+        # data = f.read()
+        papers = json.load(f)
+
+    # papers = json.loads(data)
+    papers = [tuple(x) for x in papers]
+
+    if verbose:
+        logging.info(f'Loaded in {len(papers)} papers.')
+    return papers
+
+
+def save_papers(papers):
+    """
+    Save papers in a json format.
+
+    To ensure we don't lose data we will load whatever the current json file is
+    even if it has already been loaded.
+    """
+    papers.extend(load_saved_papers(verbose=False))
+    papers = sorted(papers, reverse=True, key=lambda t: t[0])
+    papers = remove_duplicates(papers, verbose=False)
+
+    with open('saved_papers.json', 'w') as f:
+        json.dump(papers, f)
+
+
+def remove_duplicates(papers, verbose=True):
+    """
+    Sometimes a single paper shows up multiple times, probably from updates to
+    the paper being pushed before it is published. This removes those from a
+    single email but will not keep track of all papers which have been in
+    previous emails. This method is also agnostic to which version is kept.
+    """
+
+    links = set()
+    unduped = []
+    for paper in papers:
+        if paper[4] not in links:
+            unduped.append(paper)
+            links.add(paper[4])
+
+    if verbose:
+        logging.info(f'Removed {len(papers)-len(unduped)} duplicates.')
+    return unduped
 
 
 def send_papers(papers):
     """
+    Preprocess papers: load older papers, sort by relevance, remove duplicates,
+    and save them if necessary.
+
     First compose the papers into a readable format then send.
 
-    Also write out the email as a txt document for reference later.
+    Also write out the email as a html document for reference later.
     """
+    papers.extend(load_saved_papers())
+
+    # Sort papers on importance
+    papers = sorted(papers, reverse=True, key=lambda t: t[0])
+
+    papers = remove_duplicates(papers)
+
+    if len(papers) == 0:
+        logging.info('No papers to save or send.')
+        # refresh token even if no papers today
+        email_sender.get_credentials()
+        return 
+
+    # Check that today is an email day. If not save papers for now.
+    if datetime.today().weekday() not in settings.email_days:
+        logging.info('Saving papers without email due to day of week settings.')
+        save_papers(papers)
+        # refresh token every day
+        email_sender.get_credentials()
+        return
+
+    # Finished prep, compose email.
+    logging.info('Sending papers.')
     email_body = ''
 
     for paper in papers:
@@ -156,23 +236,23 @@ def send_papers(papers):
         abs_txt = 'Abstract'
         if settings.summarize_abstract:
             abs_txt = 'Summarized Abstract'
-        authors = ', '.join(paper[2])
-        email_body += f'<b>{paper[0]}</b><br/>{authors}<br/><br/><b>{abs_txt}:</b><br/>{paper[1]}<br/>'
+        authors = ', '.join(paper[3])
+        email_body += f'<b>{paper[1]}</b><br/>{authors}<br/><br/><b>{abs_txt}:</b><br/>{paper[2]}<br/>'
 
         # Add link
-        link = paper[3]
+        link = paper[4]
         email_body += f'<a href="{link}">{link}</a><br/><br/>'
 
         # Add reasoning
-        if len(paper[5]) > 0:
+        if len(paper[6]) > 0:
             email_body += '<b>Author matches:</b><br/>'
-            for a in paper[5]:
+            for a in paper[6]:
                 email_body += f'{a}'+', '
             email_body = email_body[:-2]+'<br/>'
 
-        if len(paper[4]) > 0:
+        if len(paper[5]) > 0:
             email_body += '<b>Keyword matches:</b><br/>'
-            for k_group in paper[4]:
+            for k_group in paper[5]:
                 for count, k in k_group:
                     email_body += f'Count={count}; {k}<br/>'
 
@@ -186,10 +266,11 @@ def send_papers(papers):
 
     if settings.send_email:
         success, result = email_sender.main(email_body)
-        if success is None:
-            logging.debug('No idea what happened.')
         if success:
             logging.info(f"Successfully sent email with id: {result['id']}")
+
+            # Delete the json file since we have now sent out its information.
+            os.remove('saved_papers.json')
         else:
             logging.debug(f'Failed to send with error: {result}')
 
@@ -197,9 +278,4 @@ def send_papers(papers):
 if __name__ == '__main__':
     logging.info('Running')
     papers = get_papers()
-    if len(papers) > 0:
-        logging.info('Sending papers.')
-        send_papers(papers)
-    elif settings.send_email:
-        # refresh token
-        email_sender.get_credentials()
+    send_papers(papers)

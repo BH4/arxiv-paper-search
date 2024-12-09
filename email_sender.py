@@ -69,7 +69,7 @@ def SendMessageInternal(service, user_id, message):
     except HttpError as error:
         # print('An error occurred: %s' % error)
         return False, error
-    return None, 'What happened?'
+    return None, "Not an HttpError? This shouldn't happen."
 
 
 def CreateMessage(sender, to, subject, msgHtml, msgPlain):

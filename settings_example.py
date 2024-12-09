@@ -7,6 +7,10 @@ send_email = False
 to_email = 'your_email@provider.com'
 from_email = 'your_sending_email@provider.com'
 
+# List of integers indicating days of week to send email:
+# Monday is 0 and Sunday is 6
+email_days = [0]
+
 ###############################################################################
 # Content settings
 ###############################################################################
