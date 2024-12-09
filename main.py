@@ -37,7 +37,7 @@ def author_match(first_last, author):
         return True, 'Full match'
 
     if author[0] == first_last[0] and '.' == author[1]:
-        last = first_last.split()[1]
+        last = first_last.split()[-1]
         return last in author, 'Abbreviated match'
 
     return False, None
