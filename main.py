@@ -38,7 +38,8 @@ def author_match(first_last, author):
 
     if author[0] == first_last[0] and '.' == author[1]:
         last = first_last.split()[-1]
-        return last in author, 'Abbreviated match'
+        checking_last = author.split()[-1]
+        return last == checking_last, 'Abbreviated match'
 
     return False, None
 
@@ -217,7 +218,7 @@ def send_papers(papers):
         logging.info('No papers to save or send.')
         # refresh token even if no papers today
         email_sender.get_credentials()
-        return 
+        return
 
     # Check that today is an email day. If not save papers for now.
     if datetime.today().weekday() not in settings.email_days:
