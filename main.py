@@ -92,7 +92,8 @@ def keyword_fuzzy_match(text):
                     fuzzy_type = fuzzy_match.fuzzy_counts
                     count = len(regex.findall(pattern, text, flags=regex.IGNORECASE))
 
-                    k_group_matches.append((count, f'Key: {k} -> {actual}: fuzzy type: {fuzzy_type}'))
+                    if max(fuzzy_type) < 2:  # Limit how far fuzzy match is allowed
+                        k_group_matches.append((count, f'Key: {k} -> {actual}: fuzzy type: {fuzzy_type}'))
 
         if len(k_group_matches) > 0:
             found_groups.append(identifier)
