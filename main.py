@@ -17,7 +17,7 @@ if os.path.exists(f'{filename}.log'):
     print('Already run today.')
     quit()
 
-logging.basicConfig(filename=f'{filename}.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(filename=f'{filename}.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s:%(levelname)s:%(message)s')
 
 
 def cleanhtml(raw_html):
