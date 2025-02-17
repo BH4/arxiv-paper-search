@@ -51,7 +51,7 @@ def author_check(authors):
         for w in settings.watched_authors:
             match, reason = author_match(w, a)
             if match:
-                matches.append(w)
+                matches.append((w, reason[0] == 'F'))
                 reasoning.append(reason+' '+w)
 
     return matches, reasoning
@@ -131,7 +131,8 @@ def get_papers():
 
             # Author check
             author_matches, author_match_reasons = author_check(authors)
-            importance = settings.paper_importance(existing_key_groups, author_matches)
+            paper_stats = (len(authors), sub)
+            importance = settings.paper_importance(existing_key_groups, author_matches, paper_stats)
             if importance > 0:
                 if settings.summarize_abstract:
                     abstract = summarize(abstract)
