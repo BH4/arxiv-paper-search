@@ -273,7 +273,8 @@ def send_papers(papers):
             logging.info(f"Successfully sent email with id: {result['id']}")
 
             # Delete the json file since we have now sent out its information.
-            os.remove('saved_papers.json')
+            if os.path.exists('saved_papers.json'):
+                os.remove('saved_papers.json')
         else:
             logging.debug(f'Failed to send with error: {result}')
 
