@@ -137,7 +137,7 @@ def get_papers():
             if importance > 0:
                 if settings.summarize_abstract:
                     abstract = summarize(abstract)
-                found_papers.append((importance, title, abstract, authors, link, key_matches, author_match_reasons))
+                found_papers.append((importance, title, abstract, authors, link, key_matches, author_match_reasons, sub))
 
     found_papers = sorted(found_papers, reverse=True, key=lambda t: t[0])
     logging.info(f'Found {len(found_papers)} interesting papers today out of {total_feed_papers}.')
@@ -246,6 +246,9 @@ def send_papers(papers):
         link = paper[4]
         email_body += f'<a href="{link}">{link}</a><br/><br/>'
 
+        # Add subject
+        email_body += f'<b>Subject:</b> {paper[7]}<br/><br/>'
+
         # Add reasoning
         if len(paper[6]) > 0:
             email_body += '<b>Author matches:</b><br/>'
@@ -260,7 +263,7 @@ def send_papers(papers):
                     email_body += f'Count={count}; {k}<br/>'
 
         # Separate papers
-        email_body += '<br/>'
+        email_body += '<br/><hr>'
 
     logging.info('Finished composing email.')
     with open(filename+'.html', 'w') as f:
