@@ -14,7 +14,9 @@ email_days = [0]
 ###############################################################################
 # Content settings
 ###############################################################################
+# Abstract can be sent in full or summarized with spacy.
 summarize_abstract = False
+
 """Keywords should be specified as a tuple where the first element is the
 "group identifier" which is just a string used in the "paper_meets_requirements"
 logic function and the second element should be a list of keywords as strings

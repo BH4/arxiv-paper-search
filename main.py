@@ -10,6 +10,11 @@ import email_sender
 import settings
 
 
+# Check for and create history directory
+if not os.path.isdir("history"):
+    os.makedirs("history")
+
+
 CLEANR = regex.compile('<.*?>')
 filename = 'history/'+datetime.today().strftime('%Y-%m-%d')
 
